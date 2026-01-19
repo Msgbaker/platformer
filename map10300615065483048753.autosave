@@ -1,0 +1,234 @@
+import fisica.*;
+
+color black=#000000;
+color green=#22b14c;
+color brown=#7d472f;
+color trunkBrown=#e5aa7a;
+color leaves=#d3f9bc;
+color iceBlock=#00b7ef;
+color dripStoneBase=#b5613e;
+color dripStoneTop=#4d6df3;
+color slimeBlock=#52ab68;
+color stems=#ff7e00;
+color stems2=#fff200;
+color drips=#ffc20e;
+color lava=#ed1c24;
+color enemy=#000000;
+color red=color(255, 0, 0);
+PImage map, grass, dirt, log, leave, ice, slime, tip, base, stem, drip, dripDrop, steve,stem2;
+int x, y;
+int gridsize=16;
+float zoom=3;
+int boxSize;
+float px, py, vx, vy;
+boolean w, a, s, d;
+FPlayer player;
+feet Feet;
+FWorld world;
+FCompound ground;
+ArrayList<FGameObject> terrain;
+
+void setup() {
+  ground= new FCompound();
+  ground.setStatic(true);
+  ground.setName("ground");
+  
+  boxSize=16;
+  terrain = new ArrayList<FGameObject>();
+  
+  size(1400, 1000);
+  Fisica.init(this);
+  world=new FWorld(-100000, -10000000, 100000, 100000);
+  world.setGrabbable(false);
+  images();
+  steve=loadImage("steve.png");
+  worldAdd();
+  
+  world.add(ground);
+  player();
+}
+void draw() {
+  background(200);
+  pushMatrix();
+  translate(-px*zoom+width/2, -py*zoom + height/2);
+  scale(zoom);
+  world.step();
+  world.draw();
+  popMatrix();
+  worldAct();
+  ground.wakeUp();
+}
+
+void worldAct() {
+  player.act();
+  //Feet.act();
+  for (int i=0; i<terrain.size(); i++) {
+    FGameObject obj=terrain.get(i);
+    obj.act();
+  }
+}
+void player() {
+  
+  player= new FPlayer();
+  world.add(player);
+  Feet = new feet(false);
+  world.add(Feet);
+}
+void worldAdd() {
+  while (y<map.height) {
+    color c=map.get(x, y);
+    if (c==green) {
+      FBody box= new FBox(gridsize, gridsize);
+      box.setFillColor(red);
+      box.setPosition(x*boxSize, y*boxSize);
+      box.setStatic(true);
+      box.attachImage(grass);
+      box.setName("grass");
+      box.setGroupIndex(-1);
+      ground.addBody(box);
+    }
+    if (c==brown) {
+      
+      FBody box= new FBox(gridsize, gridsize);
+      box.setPosition(x*boxSize, y*boxSize);
+      box.attachImage(dirt);
+      box.setStatic(true);
+      ground.addBody(box);
+      //world.add(box);
+      //image(dirt,x*boxSize, y*boxSize);
+    }
+    if (c==trunkBrown) {
+      FBody box= new FBox(gridsize, gridsize);
+      box.setPosition(x*boxSize, y*boxSize);
+      box.attachImage(log);
+      box.setStatic(true);
+      box.setSensor(true);
+     
+      world.add(box);
+    }
+    if (c==leaves) {
+      FBody box= new FBox(gridsize, gridsize);
+      box.setPosition(x*boxSize, y*boxSize);
+      box.attachImage(leave);
+      box.setStatic(true);
+      world.add(box);
+    }
+    if (c==iceBlock) {
+      FBody box= new FBox(gridsize, gridsize);
+      box.setPosition(x*boxSize, y*boxSize);
+      box.attachImage(ice);
+      box.setStatic(true);
+      box.setName("ice");
+      box.setFriction(-10);
+      ground.addBody(box);
+      //world.add(box);
+    }
+    if (c==slimeBlock) {
+      FBody box= new FBox(gridsize, gridsize);
+      box.setPosition(x*boxSize, y*boxSize);
+      box.attachImage(slime);
+      box.setStatic(true);
+      box.setName("slime");
+      box.setRestitution(1.35);
+      ground.addBody(box);
+      //world.add(box);
+    }
+    if (c==dripStoneBase) {
+      FPoly box= new FPoly();
+      box.setPosition(x*boxSize, y*boxSize);
+      box.attachImage(base);
+      box.vertex(-3, -8);
+      box.vertex(4, -8);
+      box.vertex(6, 8);
+      box.vertex(-5, 8);
+      box.setFillColor(0);
+      box.setStatic(true);
+      box.setName("base");
+      world.add(box);
+    }
+    if (c==dripStoneTop) {
+      FPoly box= new FPoly();
+      box.setPosition(x*boxSize, y*boxSize);
+      box.vertex(-3, 8);
+      box.vertex(-1, -8);
+      box.vertex(1, -8);
+      box.vertex(4, 8);
+      box.setFillColor(0);
+      box.attachImage(tip);
+      box.setStatic(true);
+      box.setName("tip");
+      world.add(box);
+    }
+    if (c==stems) {
+      FBody box= new FBox(gridsize, gridsize);
+      box.setPosition(x*boxSize, y*boxSize);
+      box.attachImage(stem);
+      box.setSensor(true);
+      box.setStatic(true);
+      world.add(box);
+    }  
+    if (c==drips) {
+      dripLeaf leaf = new dripLeaf(x*gridsize, y*gridsize);
+      terrain.add(leaf);
+      world.add(leaf);
+    }
+    if (c==lava) {
+      lava l= new lava(x*gridsize, y*gridsize, 20, "lava/0", ".png");
+      terrain.add(l);
+      world.add(l);
+    }
+    x++;
+    if (x==map.width) {
+      x=0;
+      y++;
+    }
+  }
+}
+void keyPressed() {
+  if (key=='w')w=true;
+  if (key=='a')a=true;
+  if (key=='s')s=true;
+  if (key=='d')d=true;
+}
+void keyReleased() {
+  if (key=='w')w=false;
+  if (key=='a')a=false;
+  if (key=='s')s=false;
+  if (key=='d')d=false;
+}
+void images() {
+  grass = loadImage("grass.png");
+  grass.resize(gridsize, gridsize);
+
+  dirt = loadImage("dirt.png");
+  dirt.resize(gridsize, gridsize);
+
+  map = loadImage("map.png");   // DO NOT resize the map!
+
+  log = loadImage("oak_log.png");
+  log.resize(gridsize, gridsize);
+
+  leave = loadImage("oak_leaves.png");
+  leave.resize(gridsize, gridsize);
+
+  ice = loadImage("ice.png");
+  ice.resize(gridsize, gridsize);
+
+  slime = loadImage("slime.png");
+  slime.resize(gridsize, gridsize);
+
+  tip = loadImage("tip.png");
+  tip.resize(gridsize, gridsize);
+
+  base = loadImage("base.png");
+  base.resize(gridsize, gridsize);
+
+  stem = loadImage("stem.png");
+  stem.resize(gridsize, gridsize);
+
+  drip = loadImage("drip.png");
+  drip.resize(gridsize, gridsize);
+
+  dripDrop = loadImage("dripDrop.png");
+  dripDrop.resize(gridsize, gridsize);
+}
